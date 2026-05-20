@@ -1,9 +1,4 @@
-import type {
-  DifficultyId,
-  ItemId,
-  OffhandItemId,
-  SettingsState,
-} from "@/store/useAppStore"
+import type { DifficultyId, ItemId, SettingsState } from "@/store/useAppStore"
 import { createAudioEngine } from "@/game/audio"
 import {
   arenaConfig,
@@ -17,13 +12,13 @@ import {
   clamp,
   norm,
   randRange,
+  rectsOverlap,
   sign,
 } from "@/game/math"
 
 type MatchConfig = {
   difficulty: DifficultyId
   hotbar: ItemId[]
-  offhand: OffhandItemId
   settings: SettingsState
 }
 
@@ -62,7 +57,6 @@ type Fighter = {
   healOverRemaining: number
   selectedSlot: number
   hotbar: ItemId[]
-  offhand: OffhandItemId
   counts: Record<ItemId, number | null>
   cooldowns: Record<"gapple" | "wind_charge" | "ender_pearl", number>
 }
@@ -105,7 +99,6 @@ export type GameHudSnapshot = {
     shieldDurability: number
     combo: number
     selectedSlot: number
-    offhand: { short: string; count: number | null }
     hotbar: { short: string; count: number | null }[]
   }
   bot: {
@@ -186,20 +179,8 @@ export function createGameController({
   let shake = 0
   let shakeV = 0
 
-  const player = createFighter(
-    "player",
-    340,
-    arenaConfig.groundY - 70,
-    config.hotbar,
-    config.offhand,
-  )
-  const bot = createFighter(
-    "bot",
-    860,
-    arenaConfig.groundY - 70,
-    config.hotbar,
-    "shield",
-  )
+  const player = createFighter("player", 340, arenaConfig.groundY - 70, config.hotbar)
+  const bot = createFighter("bot", 860, arenaConfig.groundY - 70, config.hotbar)
   bot.facing = -1
 
   const pearls: Pearl[] = []
@@ -352,10 +333,6 @@ export function createGameController({
         shieldDurability: player.shieldDurability,
         combo: player.combo,
         selectedSlot: player.selectedSlot,
-        offhand: {
-          short: itemShort[player.offhand],
-          count: player.counts[player.offhand],
-        },
         hotbar: player.hotbar.map((id) => ({
           short: itemShort[id],
           count: player.counts[id],
@@ -401,26 +378,13 @@ export function createGameController({
 
     f.blocking = false
     const held = f.hotbar[f.selectedSlot] ?? "mace"
-    const aim = screenToWorld(input.mouseX, input.mouseY)
-
-    if (
-      f.offhand === "shield" &&
-      held !== "ender_pearl" &&
-      wantUseHold &&
-      f.shieldDisableMs <= 0
-    ) {
+    if (held === "shield" && wantUseHold && f.shieldDisableMs <= 0) {
       f.blocking = true
+    } else if (wantUsePressed) {
+      activateItem(f, held)
     }
 
-    if (wantUsePressed) {
-      if (f.offhand !== "shield") {
-        activateItem(f, f.offhand, aim.x, aim.y)
-      } else if (held === "ender_pearl") {
-        activateItem(f, held, aim.x, aim.y)
-      }
-    }
-
-    if (wantAttack) attackWithHeld(f, held, "player", aim.x, aim.y)
+    if (wantAttack) attackWithHeld(f, held, "player")
   }
 
   function thinkBot(dtMsInner: number) {
@@ -500,8 +464,6 @@ export function createGameController({
     ) {
       botIntent.select = "wind_charge"
       botIntent.wantUse = true
-      botIntent.aimX = bot.x
-      botIntent.aimY = arenaConfig.groundY
       botIntent.mode = "aerial"
       botIntent.modeMs = 1200
       botIntent.wantSprint = true
@@ -540,20 +502,13 @@ export function createGameController({
 
     f.blocking = false
     const held = f.hotbar[f.selectedSlot] ?? "mace"
-    if (f.offhand === "shield" && botIntent.wantBlock && f.shieldDisableMs <= 0) {
+    if (held === "shield" && botIntent.wantBlock && f.shieldDisableMs <= 0) {
       f.blocking = true
     } else if (botIntent.wantUse) {
       activateItem(f, held, botIntent.aimX, botIntent.aimY)
     }
 
-    if (botIntent.wantAttack)
-      attackWithHeld(
-        f,
-        held,
-        "bot",
-        player.x + player.w / 2,
-        player.y + player.h / 2,
-      )
+    if (botIntent.wantAttack) attackWithHeld(f, held, "bot")
   }
 
   function applyMoveIntent(

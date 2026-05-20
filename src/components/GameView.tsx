@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
-import type {
-  DifficultyId,
-  ItemId,
-  OffhandItemId,
-  SettingsState,
-} from "@/store/useAppStore"
+import type { DifficultyId, ItemId, SettingsState } from "@/store/useAppStore"
 import { createGameController, type GameHudSnapshot } from "@/game/controller"
 
 export type MatchConfig = {
   difficulty: DifficultyId
   hotbar: ItemId[]
-  offhand: OffhandItemId
   settings: SettingsState
 }
 
@@ -33,10 +27,9 @@ export default function GameView({
     () => ({
       difficulty: config.difficulty,
       hotbar: config.hotbar,
-      offhand: config.offhand,
       settings: config.settings,
     }),
-    [config.difficulty, config.hotbar, config.offhand, config.settings],
+    [config.difficulty, config.hotbar, config.settings],
   )
 
   useEffect(() => {
@@ -74,7 +67,7 @@ export default function GameView({
           ref={canvasRef}
           className={cn(
             "block h-[72vh] w-full select-none bg-zinc-950",
-            "cursor-none outline-none",
+            "outline-none",
           )}
           tabIndex={0}
         />
@@ -178,15 +171,6 @@ function Hotbar({ hud }: { hud: GameHudSnapshot }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-2 backdrop-blur">
       <div className="flex items-stretch gap-1">
-        <div className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/40">
-          <div className="text-[10px] font-semibold text-zinc-400">OFF</div>
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-1 pb-0.5 text-[10px] text-zinc-300">
-            <div className="truncate">{hud.player.offhand.short}</div>
-            {hud.player.offhand.count !== null ? (
-              <div>{hud.player.offhand.count}</div>
-            ) : null}
-          </div>
-        </div>
         {hud.player.hotbar.map((slot, idx) => (
           <div
             key={idx}
