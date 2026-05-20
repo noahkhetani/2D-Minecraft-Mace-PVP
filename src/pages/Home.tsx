@@ -19,16 +19,13 @@ import {
 import { cn } from "@/lib/utils"
 import {
   defaultHotbar,
-  defaultOffhand,
   selectActions,
   selectDifficulty,
   selectHotbar,
-  selectOffhand,
   selectSettings,
   selectStats,
   type DifficultyId,
   type ItemId,
-  type OffhandItemId,
   type SettingsState,
   useAppStore,
 } from "@/store/useAppStore"
@@ -74,7 +71,6 @@ export default function Home() {
   const settings = useAppStore(selectSettings)
   const difficulty = useAppStore(selectDifficulty)
   const hotbar = useAppStore(selectHotbar)
-  const offhand = useAppStore(selectOffhand)
   const stats = useAppStore(selectStats)
   const actions = useAppStore(selectActions)
 
@@ -84,7 +80,6 @@ export default function Home() {
     () => hotbar.map((id) => itemMeta[id].short).join(" · "),
     [hotbar],
   )
-  const offhandDisplay = itemMeta[offhand].short
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
@@ -136,9 +131,9 @@ export default function Home() {
               />
               <StatLine
                 icon={<Swords className="h-4 w-4 text-zinc-200" />}
-                label="Loadout"
+                label="Hotbar"
                 value="Custom"
-                sub={`OFF ${offhandDisplay} · ${hotbarDisplay}`}
+                sub={hotbarDisplay}
               />
               <StatLine
                 icon={<Crosshair className="h-4 w-4 text-zinc-200" />}
@@ -175,7 +170,7 @@ export default function Home() {
             </button>
 
             <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/40 p-3 text-xs text-zinc-400">
-              Double-tap A/D to dash · LMB aims at cursor · RMB uses off-hand (hold to block with shield) · Mace damage scales with fall height
+              Double-tap A/D to dash · Mace damage scales with fall height · Axe disables shields · RMB blocks/uses item
             </div>
           </div>
 
@@ -221,9 +216,7 @@ export default function Home() {
               {tab === "loadout" ? (
                 <LoadoutPanel
                   hotbar={hotbar}
-                  offhand={offhand}
                   onChange={actions.setHotbar}
-                  onSetOffhand={actions.setOffhand}
                   onReset={actions.resetHotbar}
                 />
               ) : null}
@@ -383,79 +376,17 @@ function PlayPanel({
 
 function LoadoutPanel({
   hotbar,
-  offhand,
   onChange,
-  onSetOffhand,
   onReset,
 }: {
   hotbar: ItemId[]
-  offhand: OffhandItemId
   onChange: (hotbar: ItemId[]) => void
-  onSetOffhand: (offhand: OffhandItemId) => void
   onReset: () => void
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/30 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold">Off-hand</div>
-            <div className="mt-1 text-xs text-zinc-400">
-              Right click uses off-hand. Shield blocks while held.
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => onSetOffhand(defaultOffhand)}
-            className="rounded-xl border border-zinc-800 bg-zinc-950/30 px-3 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-950/55"
-          >
-            Reset off-hand
-          </button>
-        </div>
-
-        <div className="grid gap-2 md:grid-cols-3">
-          {(["shield", "wind_charge", "gapple"] as OffhandItemId[]).map((id) => {
-            const meta = itemMeta[id]
-            const Icon = meta.icon
-            const active = offhand === id
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onSetOffhand(id)}
-                className={cn(
-                  "flex items-center justify-between gap-3 rounded-2xl border p-3 text-left",
-                  active
-                    ? "border-emerald-400/45 bg-emerald-400/10"
-                    : "border-zinc-800 bg-zinc-900/20 hover:bg-zinc-900/40",
-                )}
-              >
-                <div>
-                  <div className="text-[11px] font-semibold tracking-[0.25em] text-zinc-400">
-                    OFF-HAND
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-zinc-100">
-                    {meta.name}
-                  </div>
-                  <div className="mt-1 text-xs text-zinc-400">
-                    {id === "shield"
-                      ? "Hold RMB to block."
-                      : id === "wind_charge"
-                        ? "RMB on ground to launch."
-                        : "Hold RMB to eat."}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/30 p-2">
-                  <Icon className="h-4 w-4 text-zinc-200" />
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-sm font-semibold">Hotbar editor</div>

@@ -5,7 +5,6 @@ import {
   selectActions,
   selectDifficulty,
   selectHotbar,
-  selectOffhand,
   selectSettings,
   useAppStore,
 } from "@/store/useAppStore"
@@ -15,17 +14,15 @@ export default function Match() {
   const settings = useAppStore(selectSettings)
   const difficulty = useAppStore(selectDifficulty)
   const hotbar = useAppStore(selectHotbar)
-  const offhand = useAppStore(selectOffhand)
   const actions = useAppStore(selectActions)
 
   const matchConfig = useMemo(
     () => ({
       difficulty,
       hotbar,
-      offhand,
       settings,
     }),
-    [difficulty, hotbar, offhand, settings],
+    [difficulty, hotbar, settings],
   )
 
   return (
