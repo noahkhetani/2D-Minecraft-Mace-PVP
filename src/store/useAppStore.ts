@@ -9,6 +9,8 @@ export type ItemId =
   | "wind_charge"
   | "ender_pearl"
 
+export type OffhandItemId = Extract<ItemId, "shield" | "wind_charge" | "gapple">
+
 export type DifficultyId = "easy" | "normal" | "hard"
 
 export type SettingsState = {
@@ -30,11 +32,13 @@ export type AppState = {
   settings: SettingsState
   difficulty: DifficultyId
   hotbar: ItemId[]
+  offhand: OffhandItemId
   stats: StatsState
   actions: {
     setDifficulty: (difficulty: DifficultyId) => void
     setSettings: (partial: Partial<SettingsState>) => void
     setHotbar: (hotbar: ItemId[]) => void
+    setOffhand: (offhand: OffhandItemId) => void
     resetHotbar: () => void
     recordWin: () => void
     recordLoss: () => void
@@ -53,6 +57,8 @@ export const defaultHotbar: ItemId[] = [
   "wind_charge",
   "gapple",
 ]
+
+export const defaultOffhand: OffhandItemId = "shield"
 
 const defaultSettings: SettingsState = {
   sfxVolume: 0.8,
@@ -75,12 +81,14 @@ export const useAppStore = create<AppState>()(
       settings: defaultSettings,
       difficulty: "normal",
       hotbar: defaultHotbar,
+      offhand: defaultOffhand,
       stats: defaultStats,
       actions: {
         setDifficulty: (difficulty) => set({ difficulty }),
         setSettings: (partial) =>
           set((s) => ({ settings: { ...s.settings, ...partial } })),
         setHotbar: (hotbar) => set({ hotbar }),
+        setOffhand: (offhand) => set({ offhand }),
         resetHotbar: () => set({ hotbar: defaultHotbar }),
         recordWin: () =>
           set((s) => {
@@ -113,6 +121,7 @@ export const useAppStore = create<AppState>()(
         settings: s.settings,
         difficulty: s.difficulty,
         hotbar: s.hotbar,
+        offhand: s.offhand,
         stats: s.stats,
       }),
     },
@@ -122,5 +131,6 @@ export const useAppStore = create<AppState>()(
 export const selectSettings = (s: AppState) => s.settings
 export const selectDifficulty = (s: AppState) => s.difficulty
 export const selectHotbar = (s: AppState) => s.hotbar
+export const selectOffhand = (s: AppState) => s.offhand
 export const selectStats = (s: AppState) => s.stats
 export const selectActions = (s: AppState) => s.actions
